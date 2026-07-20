@@ -702,6 +702,65 @@ echo "$CR_NAME $CR_VERSION Build Script $CR_DATE"
 if [ "$1" = "-d" ]; then
 BUILD_DEBUG
 fi
+
+# CLI Mode: non-interactive build
+# Usage: ./apollo.sh -cli <target> <compiler> <selinux> <ksu> <clean>
+if [ "$1" = "-cli" ]; then
+	if [ $# -ne 6 ]; then
+		echo "Usage: $0 -cli <target> <compiler> <selinux> <ksu> <clean>"
+		echo ""
+		echo "  target:   1-6 (device), 7 (all)"
+		echo "            1=starlte 2=star2lte 3=crownlte"
+		echo "            4=starltekor 5=star2ltekor 6=crownltekor"
+		echo "            7=build all devices (ZIP)"
+		echo "  compiler: 1-8"
+		echo "            1=Clang12 2=Clang14 3=Clang18 4=Clang20"
+		echo "            5=Neutron18 6=Neutron19 7=Neutron20 8=custom"
+		echo "  selinux:  1=Permissive, 2=Enforcing"
+		echo "  ksu:      y/n"
+		echo "  clean:    y/n"
+		echo ""
+		echo "  Example: $0 -cli 5 4 2 y n"
+		exit 1
+	fi
+	CR_TARGET=$2
+	CR_COMPILER=$3
+	CR_SELINUX=$4
+	CR_KSU=$5
+	CR_CLEAN=$6
+	# Validate with same defaults as interactive
+	if ! [[ "$CR_TARGET" =~ ^[1-7]$ ]]; then
+		CR_TARGET=$DEFAULT_TARGET
+		echo "Invalid target, defaulting to $DEFAULT_TARGET"
+	fi
+	if ! [[ "$CR_COMPILER" =~ ^[1-8]$ ]]; then
+		CR_COMPILER=$DEFAULT_COMPILER
+		echo "Invalid compiler, defaulting to $DEFAULT_COMPILER"
+	fi
+	if ! [[ "$CR_SELINUX" =~ ^[1-2]$ ]]; then
+		CR_SELINUX=$DEFAULT_SELINUX
+		echo "Invalid SELinux mode, defaulting to $DEFAULT_SELINUX"
+	fi
+	if ! [[ "$CR_KSU" =~ ^[yYnN]$ ]]; then
+		CR_KSU=$DEFAULT_KSU
+		echo "Invalid KSU option, defaulting to $DEFAULT_KSU"
+	fi
+	if ! [[ "$CR_CLEAN" =~ ^[yYnN]$ ]]; then
+		CR_CLEAN=$DEFAULT_CLEAN
+		echo "Invalid clean option, defaulting to $DEFAULT_CLEAN"
+	fi
+	echo "----------------------------------------------"
+	echo " CLI Mode: target=$CR_TARGET compiler=$CR_COMPILER selinux=$CR_SELINUX ksu=$CR_KSU clean=$CR_CLEAN"
+	echo "----------------------------------------------"
+	if [ "$CR_TARGET" = "7" ]; then
+		CR_MKZIP="y"
+		BUILD_ALL
+	else
+		BUILD
+	fi
+	exit $?
+fi
+
 echo ""
 echo ""
 echo "1) starlte"

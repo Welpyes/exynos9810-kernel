@@ -1,0 +1,61 @@
+name: Compile Kernel
+
+# COMET Worfklow [240904]
+# by mrcxlinux
+
+# this workflow is meant to build "Apollo Kernel" for 9810
+# to change build options go to "BUILD_KERNEL" in apollo.sh
+
+# Build: Galaxy S9+ KOR (G965N)
+# CR_TARGET=5
+# CR_COMPILER=4 (clang 20)
+# CR_SELINUX=2 (enforcing)
+# CR_KSU="y" (enabled)
+# CR_CLEAN="n" (dirty build)
+
+on:
+  workflow_dispatch:
+  push:
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Init submodules
+      run: git submodule update --init --recursive
+
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y zip bsdiff tar xz-utils build-essential
+
+    - name: Run apollo.sh
+      id: run_apollo
+      run: mkdir Apollo/Out | ./apollo.sh -cli 5 4 2 y n 2>&1 | tee apollo_output.log
+
+    - name: Check script status
+      run: |
+        if grep -q "Aborting" apollo_output.log; then
+          echo "Aborting found in output, failing the job"
+          exit 1
+        else
+          echo "No 'Aborting' found, job succeeded"
+        fi
+
+    # Upload the output log as an artifact
+    - name: Upload apollo output log
+      uses: actions/upload-artifact@v4
+      with:
+        name: apollo-log
+        path: apollo_output.log
+
+    # Upload all files in the Apollo/Product directory as an artifact
+    - name: Upload final files
+      uses: actions/upload-artifact@v4
+      with:
+        name: kernel-apollo-final
+        path: Apollo/Product/**
+

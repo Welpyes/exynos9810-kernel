@@ -132,8 +132,13 @@ if [ $CR_COMPILER != "8" ]; then
 		echo " $CR_CLANG compiler is missing"
 		echo " "
 		echo " "
-		read -p "Download Toolchain ? (y/n) > " TC_DL
-		if [ $TC_DL = "y" ]; then
+		if [ ! -t 0 ]; then
+			echo "Non-interactive mode, auto-downloading toolchain..."
+			TC_DL="y"
+		else
+			read -p "Download Toolchain ? (y/n) > " TC_DL
+		fi
+		if [ "$TC_DL" = "y" ]; then
 			echo "Checking URL validity..."
 			URL=$CR_CLANG_URL
 			if curl --output /dev/null --silent --head --fail "$URL"; then

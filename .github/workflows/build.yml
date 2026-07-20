@@ -32,9 +32,17 @@ jobs:
     - name: Install dependencies
       run: sudo apt-get update && sudo apt-get install -y zip bsdiff tar xz-utils build-essential
 
+    - name: Download Clang 20 toolchain
+      run: |
+        mkdir -p ../compiler/clang-20.0.0-r547379
+        wget -qO- "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r547379.tar.gz" \
+          | tar --use-compress-program=unzstd -xv -C ../compiler/clang-20.0.0-r547379
+
     - name: Run apollo.sh
       id: run_apollo
-      run: mkdir Apollo/Out | ./apollo.sh -cli 5 4 2 y n 2>&1 | tee apollo_output.log
+      run: |
+        mkdir -p Apollo/Out
+        ./apollo.sh -cli 5 4 2 y n 2>&1 | tee apollo_output.log
 
     - name: Check script status
       run: |

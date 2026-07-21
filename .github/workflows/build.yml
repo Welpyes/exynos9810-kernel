@@ -30,7 +30,7 @@ jobs:
       run: |
         git submodule update --init --recursive
         cd KernelSU-Next
-        git checkout 53791c92bff13d62338f29cc9da035a37652ca91
+        # git checkout 53791c92bff13d62338f29cc9da035a37652ca91
         cd ..
         git add KernelSU-Next
 

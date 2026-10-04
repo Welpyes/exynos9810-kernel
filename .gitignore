@@ -142,6 +142,7 @@ Apollo/Product/*.img
 Apollo/Product/*.zip
 arch/arm64/configs/tmp_defconfig
 drivers/gator_5.27/generated_gator_src_md5.h
+<<<<<<< HEAD
 scripts/crypto/__pycache__/*
 scripts/fmp/__pycache__/*
 drivers/gator_5.27/gator_src_md5.h
@@ -151,10 +152,12 @@ net/wireguard/crypto/zinc/poly1305/poly1305-arm64.S
 scripts/dtbtool_exynos/dtbtool
 arch/arm64/boot/dts/exynos/*reverse.dts
 
+# KSU
+drivers/kernelsu
+
 # Toolchain
 toolchain/*
-
-# kernelsu
-drivers/kernelsu/*
-
-
+=======
+scripts/crypto/__pycache__/
+scripts/fmp/__pycache__/
+>>>>>>> parent of a580eccd3afa (drivers: kernelsu: add KernelSU importer and patches)

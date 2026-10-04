@@ -7,9 +7,7 @@ These packages are built from the `duhan-(4.9.337)` source profile with:
 - OneUI brightness workaround
 - Google Clang 20
 
-`KernelSU` appears in the filename and embedded config only for the two KernelSU packages.
-
-Build all four packages from the source tree:
+Build both packages from the source tree:
 
 ```bash
 DS_ACK_CLEAN=n bash apollo.sh --all-releases

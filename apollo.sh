@@ -52,8 +52,6 @@ CR_DATE=${DS_ACK_BUILD_DATE:-$(date +%d.%m.%Y)}
 CR_ZIP_SUFFIX=${DS_ACK_ZIP_SUFFIX:-}
 CR_ZIP_NAME=${DS_ACK_ZIP_NAME:-}
 # General init
-export KSU_MANUAL_HOOK=y
-export CONFIG_KSU_MANUAL_HOOK=y
 export ANDROID_MAJOR_VERSION=$CR_ANDROID
 export PLATFORM_VERSION=$CR_PLATFORM
 export $CR_ARCH
@@ -77,13 +75,11 @@ CR_CONFIG_APOLLO=apollo_defconfig
 CR_CONFIG_INTL=eur_defconfig
 CR_CONFIG_KOR=kor_defconfig
 CR_SELINUX="2"
-CR_KSU="n"
 CR_CLEAN="n"
 # Default Compilation
 DEFAULT_TARGET=3   # crownlte
 DEFAULT_COMPILER=3 # clang18
 DEFAULT_SELINUX=2  # enforce
-DEFAULT_KSU=y      # enabled
 DEFAULT_CLEAN=n    # dirty
 #####################################################
 
@@ -244,8 +240,6 @@ BUILD_IMAGE_NAME()
 # Build options
 BUILD_OPTIONS()
 {
-	# KSU Version
-	KSU_VERSION=$( [ -f "drivers/kernelsu/Makefile" ] && grep -oP '(?<=-DKSU_VERSION=)[0-9]+' drivers/kernelsu/Makefile )
 	echo "----------------------------------------------"
 	echo " Apollo Kernel Build Options "
 	echo " "
@@ -261,15 +255,6 @@ BUILD_OPTIONS()
 		echo " SELinux	- Permissive"
 	else
 		echo " SELinux	- Enforcing"
-	fi
-	if [[ "$CR_KSU" =~ ^[yY]$ ]]; then
-		if [ -n "$KSU_VERSION" ]; then
-		echo " KernelSU	- Version: $KSU_VERSION"
-		else
-		echo " KernelSU	- Enabled"
-		fi
-	else
-		echo " KernelSU	- Disabled"
 	fi
 	echo " "
 }
@@ -321,14 +306,6 @@ BUILD_GENERATE_CONFIG()
   else
     echo " Building SELinux Enforced Kernel"
   fi
-  if [[ "$CR_KSU" =~ ^[yY]$ ]]; then
-    echo " Building KernelSU"
-    echo "CONFIG_KSU=y" >> $CR_DEFCONFIG/tmp_defconfig
-    CR_IMAGE_NAME=$CR_IMAGE_NAME-KSU
-    zver=$zver-KernelSU
-  else
-    echo "# CONFIG_KSU is not set" >> $CR_DEFCONFIG/tmp_defconfig
-  fi
   echo " $CR_VARIANT config generated "
   echo " "
   CR_CONFIG=tmp_defconfig
@@ -337,8 +314,6 @@ BUILD_GENERATE_CONFIG()
 # Kernel information Function
 BUILD_OUT()
 {
-# KSU Version
-	KSU_VERSION=$( [ -f "drivers/kernelsu/Makefile" ] && grep -oP '(?<=-DKSU_VERSION=)[0-9]+' drivers/kernelsu/Makefile )
   echo "----------------------------------------------"
   echo " Kernel		- $CR_IMAGE_NAME"
   echo " Device		- $CR_VARIANT"
@@ -353,7 +328,6 @@ BUILD_OUT()
 	else
 		echo " SELinux	- Enforcing"
 	fi
-  echo " KernelSU	- Version: $KSU_VERSION"
   echo "----------------------------------------------"
   echo "$CR_VARIANT kernel build finished."
   echo "Compiled DTB Size = $sizdT Kb"
@@ -557,7 +531,6 @@ CR_DATE=${DS_ACK_BUILD_DATE:-08.05.2026}
 CR_COMPILER=${DS_ACK_COMPILER:-4}
 CR_MKZIP=y
 CR_CLEAN=${DS_ACK_CLEAN:-n}
-CR_KSU=y
 CR_ZIP_SUFFIX=
 
 if [ ! -x "${DS_ACK_TOOLCHAIN:-$CR_TC/clang-20.0.0-r547379}/bin/clang" ]; then
@@ -567,13 +540,13 @@ if [ ! -x "${DS_ACK_TOOLCHAIN:-$CR_TC/clang-20.0.0-r547379}/bin/clang" ]; then
 fi
 
 CR_SELINUX=2
-CR_ZIP_NAME=$CR_NAME-$CR_VERSION-$CR_DATE-Enforcing-KernelSU-OneUI7-erofs-dtb
-echo "Building enforcing KernelSU profile"
+CR_ZIP_NAME=$CR_NAME-$CR_VERSION-$CR_DATE-Enforcing-OneUI7-erofs-dtb
+echo "Building enforcing profile"
 BUILD_ALL || return 1
 
 CR_SELINUX=1
-CR_ZIP_NAME=$CR_NAME-$CR_VERSION-$CR_DATE-Permissive-KernelSU-OneUI7-erofs-dtb
-echo "Building permissive KernelSU profile"
+CR_ZIP_NAME=$CR_NAME-$CR_VERSION-$CR_DATE-Permissive-OneUI7-erofs-dtb
+echo "Building permissive profile"
 BUILD_ALL || return 1
 }
 
@@ -584,7 +557,6 @@ echo " DEBUG : Debug build initiated "
 CR_TARGET=5
 CR_COMPILER=3
 CR_SELINUX=0
-CR_KSU="y"
 CR_CLEAN="n"
 echo " DEBUG : Set Build options "
 echo " DEBUG : Variant  : $CR_VARIANT_N960F"
@@ -603,7 +575,7 @@ exit 0;
 BUILD_GITHUB_RELEASE(){
 echo "----------------------------------------------"
 echo " Initiating Automated GitHub Release Build "
-echo " This will compile 4 ZIPs (Enforcing/Permissive + KSU/No-KSU)"
+echo " This will compile 2 ZIPs (Enforcing/Permissive)"
 echo " Note: Performing 1 initial clean, then using dirty builds to save time."
 echo "----------------------------------------------"
 
@@ -613,7 +585,7 @@ CR_COMPILER=${DS_ACK_COMPILER:-4}
 CR_DATE=${DS_ACK_BUILD_DATE:-08.05.2026}
 CR_ZIP_SUFFIX=
 
-echo "=== [0/4] Initial Workspace Cleanup ==="
+echo "=== [0/3] Initial Workspace Cleanup ==="
 rm -r -f $CR_DTB
 rm -r -f $CR_KERNEL
 rm -rf $CR_DTS/.*.tmp
@@ -626,37 +598,21 @@ rm -rf $CR_OUTZIP
 echo " Cleanup done. Starting fast incremental builds..."
 echo "----------------------------------------------"
 
-# 1. Enforcing, No KSU
-echo "=== [1/4] Building Enforcing - No KSU ==="
+# 1. Enforcing
+echo "=== [1/3] Building Enforcing ==="
 CR_SELINUX=2
-CR_KSU="n"
 CR_ZIP_NAME=$CR_NAME-$CR_VERSION-$CR_DATE-Enforcing-OneUI7-erofs-dtb
 BUILD_ALL || exit 1
 
-# 2. Enforcing, KSU
-echo "=== [2/4] Building Enforcing - KernelSU ==="
-CR_SELINUX=2
-CR_KSU="y"
-CR_ZIP_NAME=$CR_NAME-$CR_VERSION-$CR_DATE-Enforcing-KernelSU-OneUI7-erofs-dtb
-BUILD_ALL || exit 1
-
-# 3. Permissive, No KSU
-echo "=== [3/4] Building Permissive - No KSU ==="
+# 2. Permissive
+echo "=== [2/3] Building Permissive ==="
 CR_SELINUX=1
-CR_KSU="n"
 CR_ZIP_NAME=$CR_NAME-$CR_VERSION-$CR_DATE-Permissive-OneUI7-erofs-dtb
-BUILD_ALL || exit 1
-
-# 4. Permissive, KSU
-echo "=== [4/4] Building Permissive - KernelSU ==="
-CR_SELINUX=1
-CR_KSU="y"
-CR_ZIP_NAME=$CR_NAME-$CR_VERSION-$CR_DATE-Permissive-KernelSU-OneUI7-erofs-dtb
 BUILD_ALL || exit 1
 
 echo "----------------------------------------------"
 echo " GitHub Release Builds Completed Successfully! "
-echo " Check $CR_PRODUCT directory for your 4 new ZIP files."
+echo " Check $CR_PRODUCT directory for your 2 new ZIP files."
 echo "----------------------------------------------"
 exit 0;
 }
@@ -824,8 +780,6 @@ echo "1) SELinux Permissive "  "2) SELinux Enforcing"
 echo " "
 read -p "Please select your SElinux mode (1-2) > " CR_SELINUX
 echo " "
-read -p "Enable KernelSU? (y/n) > " CR_KSU
-echo " "
 read -p "Clean Builds? (y/n) > " CR_CLEAN
 echo " "
 
@@ -843,9 +797,6 @@ if ! [[ "$CR_SELINUX" =~ ^[1-2]$ ]]; then
     CR_SELINUX=$DEFAULT_SELINUX
 fi
 
-if ! [[ "$CR_KSU" =~ ^[yYnN]$ ]]; then
-    CR_KSU=$DEFAULT_KSU
-fi
 if ! [[ "$CR_CLEAN" =~ ^[yYnN]$ ]]; then
     CR_CLEAN=$DEFAULT_CLEAN
 fi
